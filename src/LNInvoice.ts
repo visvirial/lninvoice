@@ -16,13 +16,13 @@ class LNInvoice {
 	signature: (Buffer|null) = null;
 	
 	// p(1).
-	payment_hash: (string|null) = null;
+	payment_hash: (Buffer|null) = null;
 	// d(13).
 	description: (string|null) = null;
 	// n(19).
 	pubkey: (string|null) = null;
 	// h(23).
-	description_hash: (string|null) = null;
+	description_hash: (Buffer|null) = null;
 	// x(6).
 	expiry: number = 3600;
 	// c(24).
@@ -100,7 +100,7 @@ class LNInvoice {
 			switch(type) {
 				// Payment hash.
 				case 1:
-					inv.payment_hash = data.toString('hex').slice(0, 64);
+					inv.payment_hash = data.slice(0, 64);
 					break;
 				// Short description.
 				case 13:
@@ -110,10 +110,11 @@ class LNInvoice {
 				// Public key for payee.
 				case 19:
 					break;
+				*/
 				// SHA256 description.
 				case 23:
+					inv.description_hash = data.slice(0, 64);
 					break;
-				*/
 				// expiry
 				case 6:
 					inv.expiry = data.readUIntBE(0, data.length);
