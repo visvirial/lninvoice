@@ -24,7 +24,7 @@ class LNInvoice {
 	// h(23).
 	description_hash: (string|null) = null;
 	// x(6).
-	exipry: number = 3600;
+	expiry: number = 3600;
 	// c(24).
 	cltv_expiry: number = 9;
 	// f(9).
@@ -36,7 +36,7 @@ class LNInvoice {
 		this.timestamp = Math.floor(new Date().getTime() / 1000);
 	}
 	
-	static fromWordsToBytes(words: Buffer): Buffer {
+	static fromWordsToBytes(words: Buffer, trim: boolean=true): Buffer {
 		const buf: number[] = [];
 		for(let loc: number=0; loc<words.length*5; loc++) {
 			const loc5 = Math.floor(loc / 5);
@@ -44,7 +44,7 @@ class LNInvoice {
 			if(loc%8 === 0) buf[loc8]=0;
 			buf[loc8] |= ((words[loc5] >> (4 - (loc%5))) & 1) << (7 - (loc%8));
 		}
-		if(words.length%8 !== 0) {
+		if(trim && words.length%8 !== 0) {
 			buf.pop();
 		}
 		return Buffer.from(buf);
@@ -64,7 +64,9 @@ class LNInvoice {
 	
 	static checkSignature(str: string, pubkey_raw: string): boolean {
 		const dec = bech32.decode(str, Number.MAX_VALUE);
-		const sig_data = Buffer.concat([Buffer.from(dec.prefix), LNInvoice.fromWordsToBytes(dec.words.slice(0, dec.words.length-104))]);
+		const sig_data = Buffer.concat([
+			Buffer.from(dec.prefix),
+			LNInvoice.fromWordsToBytes(dec.words.slice(0, dec.words.length-104), false)]);
 		const sig_hash = bitcoin.crypto.sha256(sig_data);
 		const signature_raw = Buffer.from(bech32.fromWords(dec.words.slice(dec.words.length-104)));
 		const signature = new bitcoin.ECSignature(
@@ -94,14 +96,27 @@ class LNInvoice {
 			const data_length = (tagged[cursor+1] << 5) + (tagged[cursor+2]);
 			const data_raw = tagged.slice(cursor+3, cursor+3+data_length);
 			cursor += 3 + data_length;
+			const data = LNInvoice.fromWordsToBytes(data_raw);
 			switch(type) {
 				// Payment hash.
 				case 1:
-					inv.payment_hash = LNInvoice.fromWordsToBytes(data_raw).toString('hex').slice(0, 64);
+					inv.payment_hash = data.toString('hex').slice(0, 64);
 					break;
 				// Short description.
 				case 13:
-					inv.description = LNInvoice.fromWordsToBytes(data_raw).toString();
+					inv.description = data.toString();
+					break;
+				/*
+				// Public key for payee.
+				case 19:
+					break;
+				// SHA256 description.
+				case 23:
+					break;
+				*/
+				// expiry
+				case 6:
+					inv.expiry = data.readUIntBE(0, data.length);
 					break;
 				default:
 					console.log(`Unknown type = ${type}`);
