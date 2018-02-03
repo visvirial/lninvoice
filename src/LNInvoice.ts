@@ -32,9 +32,9 @@ class LNInvoice {
 	// h(23).
 	description_hash: (Buffer|null) = null;
 	// x(6).
-	expiry: number = 3600;
+	expiry: (number|null) = null;
 	// c(24).
-	cltv_expiry: number = 9;
+	cltv_expiry: (number|null) = null;
 	// f(9).
 	fallback_addr: (string|null) = null;
 	// r(3).
