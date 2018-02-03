@@ -6,6 +6,14 @@ import bech32 from 'bech32';
 import bitcoin from 'bitcoinjs-lib';
 import BigInteger from 'bigi';
 
+type RoutingInfo = {
+	pubkey: Buffer,
+	short_channel_id: Buffer,
+	fee_base_msat: number,
+	fee_proportional_millionths: number,
+	cltv_expiry_delta: number,
+}
+
 class LNInvoice {
 	
 	prefix: string = 'lnbc';
@@ -30,9 +38,10 @@ class LNInvoice {
 	// f(9).
 	fallback_addr: (string|null) = null;
 	// r(3).
-	routing_info: Buffer[] = [];
+	routing_info: RoutingInfo[] = [];
 	
 	constructor() {
+		// Timestamp defaulting to the current time.
 		this.timestamp = Math.floor(new Date().getTime() / 1000);
 	}
 	
@@ -157,6 +166,19 @@ class LNInvoice {
 							break;
 						default:
 							console.log('SegWit version not supported!');
+					}
+					break;
+				// Routing information.
+				case 3:
+					console.log(data.length);
+					for(let offset:number=0; offset<data.length; offset+=51) {
+						inv.routing_info.push({
+							pubkey: data.slice(offset+0, offset+33),
+							short_channel_id: data.slice(offset+33, offset+41),
+							fee_base_msat: data.readUInt32BE(offset+41),
+							fee_proportional_millionths: data.readUInt32BE(offset+45),
+							cltv_expiry_delta: data.readUInt16BE(offset+49),
+						});
 					}
 					break;
 				default:
