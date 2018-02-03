@@ -1,0 +1,13 @@
+{
+  "name": "lninvoice",
+  "version": "0.0.1",
+  "description": "Decode/Encode Lightning Network Invoice data.",
+  "author": "Vis Virial <visvirial@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bech32": "^1.1.1"
+  },
+  "dependencies": {
+    "bech32": "^1.1.3"
+  }
+}
