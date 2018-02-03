@@ -147,20 +147,19 @@ class LNInvoice {
 				case 9:
 					const version = data_raw[0];
 					const address_raw = LNInvoice.fromWordsToBytes(data_raw.slice(1));
+					const bitcoin_network = inv.getNetwork();
+					if(bitcoin_network == null) {
+						console.log('Fallback on-chain address cannot be encoded because invoice prefix is unknown type.');
+						break;
+					}
 					switch(version) {
 						// Version zero witness.
 						case 0:
-							// TODO:
-							console.log('SegWit version not supported!');
+							inv.fallback_addr = bitcoin.address.toBech32(address_raw, 0, inv.prefix.slice(2));
 							break;
 						// P2PKH / P2SH.
 						case 17:
 						case 18:
-							const bitcoin_network = inv.getNetwork();
-							if(bitcoin_network == null) {
-								console.log('Fallback on-chain address cannot be encoded because invoice prefix is unknown type.');
-								break;
-							}
 							const network_version = version==17 ? bitcoin_network.pubKeyHash : bitcoin_network.scriptHash;
 							inv.fallback_addr = bitcoin.address.toBase58Check(address_raw, network_version);
 							break;
