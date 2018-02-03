@@ -11,6 +11,7 @@ Installation
 Run the following command to compile TypeScript code into JavaScript.
 
 ```
+$ npm install
 $ npm run build
 ```
 

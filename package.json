@@ -4,9 +4,14 @@
   "description": "Decode/Encode Lightning Network Invoice data.",
   "author": "Vis Virial <visvirial@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
   "devDependencies": {
     "@types/bech32": "^1.1.1",
-    "@types/bitcoinjs-lib": "^3.3.1"
+    "@types/bitcoinjs-lib": "^3.3.1",
+    "typescript": "^2.7.1"
   },
   "dependencies": {
     "bech32": "^1.1.3",
