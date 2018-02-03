@@ -3,6 +3,8 @@
  */
 
 import bech32 from 'bech32';
+import bitcoin from 'bitcoinjs-lib';
+import BigInteger from 'bigi';
 
 class LNInvoice {
 	
@@ -11,7 +13,7 @@ class LNInvoice {
 	multiplier: string = '';
 	
 	timestamp: number;
-	signature: (string|null) = null;
+	signature: (Buffer|null) = null;
 	
 	// p(1).
 	payment_hash: (string|null) = null;
@@ -60,6 +62,18 @@ class LNInvoice {
 		};
 	}
 	
+	static checkSignature(str: string, pubkey_raw: string): boolean {
+		const dec = bech32.decode(str, Number.MAX_VALUE);
+		const sig_data = Buffer.concat([Buffer.from(dec.prefix), LNInvoice.fromWordsToBytes(dec.words.slice(0, dec.words.length-104))]);
+		const sig_hash = bitcoin.crypto.sha256(sig_data);
+		const signature_raw = Buffer.from(bech32.fromWords(dec.words.slice(dec.words.length-104)));
+		const signature = new bitcoin.ECSignature(
+			BigInteger.fromBuffer(signature_raw.slice(0, 32)),
+			BigInteger.fromBuffer(signature_raw.slice(32, 64)));
+		const pubkey = bitcoin.ECPair.fromPublicKeyBuffer(Buffer.from(pubkey_raw, 'hex'), bitcoin.networks.bitcoin);
+		return pubkey.verify(sig_hash, signature);
+	}
+	
 	static fromBech32(str: string): LNInvoice {
 		const inv = new LNInvoice();
 		const dec = bech32.decode(str, Number.MAX_VALUE);
@@ -72,7 +86,7 @@ class LNInvoice {
 		inv.timestamp = (dec.words[0] << 30) | (dec.words[1] << 25) | (dec.words[2] << 20) |
 		                (dec.words[3] << 15) | (dec.words[4] << 10) | (dec.words[5] <<  5) | dec.words[6];
 		// Read signature.
-		inv.signature = Buffer.from(bech32.fromWords(dec.words.slice(dec.words.length-104))).toString('hex');
+		inv.signature = Buffer.from(bech32.fromWords(dec.words.slice(dec.words.length-104)));
 		// Read tagged part.
 		const tagged = dec.words.slice(7, dec.words.length-104);
 		for(let cursor: number=0; cursor<tagged.length;) {
@@ -94,7 +108,6 @@ class LNInvoice {
 					console.log(`data = ${data_raw.join(' ')}`);
 			}
 		}
-		// TODO: check signature for validity!
 		return inv;
 	}
 	
