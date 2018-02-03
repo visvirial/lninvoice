@@ -36,6 +36,16 @@ class LNInvoice {
 		this.timestamp = Math.floor(new Date().getTime() / 1000);
 	}
 	
+	private getNetwork(): (bitcoin.Network|null) {
+		switch(this.prefix) {
+			case 'lnbc':
+				return bitcoin.networks.bitcoin;
+			case 'lntb':
+				return bitcoin.networks.testnet;
+		}
+		return null;
+	}
+	
 	static fromWordsToBytes(words: Buffer, trim: boolean=true): Buffer {
 		const buf: number[] = [];
 		for(let loc: number=0; loc<words.length*5; loc++) {
@@ -118,6 +128,36 @@ class LNInvoice {
 				// expiry
 				case 6:
 					inv.expiry = data.readUIntBE(0, data.length);
+					break;
+				/*
+				// min_final_cltv_expiry
+				case 24:
+					break;
+				*/
+				// Fallback on-chain address.
+				case 9:
+					const version = data_raw[0];
+					const address_raw = LNInvoice.fromWordsToBytes(data_raw.slice(1));
+					switch(version) {
+						// Version zero witness.
+						case 0:
+							// TODO:
+							console.log('SegWit version not supported!');
+							break;
+						// P2PKH / P2SH.
+						case 17:
+						case 18:
+							const bitcoin_network = inv.getNetwork();
+							if(bitcoin_network == null) {
+								console.log('Fallback on-chain address cannot be encoded because invoice prefix is unknown type.');
+								break;
+							}
+							const network_version = version==17 ? bitcoin_network.pubKeyHash : bitcoin_network.scriptHash;
+							inv.fallback_addr = bitcoin.address.toBase58Check(address_raw, network_version);
+							break;
+						default:
+							console.log('SegWit version not supported!');
+					}
 					break;
 				default:
 					console.log(`Unknown type = ${type}`);
