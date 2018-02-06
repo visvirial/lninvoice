@@ -23,7 +23,7 @@ Sample Code
 Copy&paste the following code into `test.js` and run `node test.js` in your console.
 
 ```
-const LNInvoice = require('./dist/LNInvoice');
+const LNInvoice = require('./dist/src/LNInvoice');
 
 //const privkey = 'e126f68f7eafcc8b74f54d269fe206be715000f94dac067d1c04a8ca3b2db734';
 const pubkey = '03e7156ae33b0a208d0744199163177e909e80176e55d97a2f221ede0f934dd9ad';
